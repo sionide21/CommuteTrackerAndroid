@@ -1,5 +1,10 @@
 package net.moosen.commutetracker;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -19,6 +24,7 @@ public class Tracker extends Service implements LocationListener {
 	private Notification notification = null;
 	private LocationManager lm;
 	private NotificationManager notificationManager;
+	private JSONOutputStream out;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -26,7 +32,23 @@ public class Tracker extends Service implements LocationListener {
 		showNotification();
 		lm = (LocationManager) getSystemService(LOCATION_SERVICE);
 		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 30 * 1000, 0, this);
+		try {
+			out = new JSONOutputStream(openSessionFile());
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException("Could not open output file.", e);
+		}
 		return super.onStartCommand(intent, flags, startId);
+	}
+
+	private OutputStream openSessionFile() throws FileNotFoundException {
+		File filesDir = getExternalFilesDir(null);
+		String filename = "Commute-" + System.currentTimeMillis() / 1000 + ".json";
+		File file = new File(filesDir, filename);
+		// Extremely unlikely
+		for (int x = 1; file.exists(); x++) {
+			file = new File(filesDir, filename + '.' + x);
+		}
+		return new FileOutputStream(file);
 	}
 
 	@Override
@@ -38,6 +60,12 @@ public class Tracker extends Service implements LocationListener {
 	@Override
 	public void onDestroy() {
 		lm.removeUpdates(this);
+		try {
+			out.close();
+		} catch (IOException e) {
+			// Log it but it doesn't much matter
+			Log.e(this.getClass().getName(), "Error closing commute file.", e);
+		}
 		super.onDestroy();
 	}
 
@@ -60,17 +88,20 @@ public class Tracker extends Service implements LocationListener {
 	@Override
 	public void onLocationChanged(Location location) {
 		updateNotification(R.string.tracker_running);
-		String json = new JSONBuilder()
-			.addInfo("Accuracy", location.getAccuracy())
-			.addInfo("Altitude", location.getAltitude())
-			.addInfo("Bearing", location.getBearing())
-			.addInfo("Latitude", location.getLatitude())
-			.addInfo("Longitude", location.getLongitude())
-			.addInfo("Speed", location.getSpeed())
-			.addInfo("Time", location.getTime())
-			.toString();
-
-		Log.w("net.moosen.commutetracker", json);
+		try {
+			out.write(new JSONBuilder()
+				.addInfo("Accuracy", location.getAccuracy())
+				.addInfo("Altitude", location.getAltitude())
+				.addInfo("Bearing", location.getBearing())
+				.addInfo("Latitude", location.getLatitude())
+				.addInfo("Longitude", location.getLongitude())
+				.addInfo("Speed", location.getSpeed())
+				.addInfo("Time", location.getTime())
+			);
+		} catch (IOException e) {
+			Log.e(this.getClass().getName(), "Error writing commute file.", e);
+			updateNotification(R.string.tracker_cannot_write);
+		}
 	}
 
 	@Override
@@ -126,3 +157,29 @@ class JSONBuilder {
 	}
 }
 
+/**
+ * A rudimentary list store.
+ */
+class JSONOutputStream {
+	private final OutputStream out;
+	private boolean started = false;
+
+	public JSONOutputStream(OutputStream out) {
+		this.out = out;
+	}
+
+	public void write(JSONBuilder object) throws IOException {
+		if (!started) {
+			out.write('[');
+			started = true;
+		}
+		out.write(object.toString().getBytes());
+	}
+
+	public void close() throws IOException {
+		if (started) {
+			out.write(']');
+		}
+		out.close();
+	}
+}

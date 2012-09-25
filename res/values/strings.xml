@@ -7,6 +7,7 @@
     <string name="tracker_title">Tracking Commute</string>
     <string name="tracker_running">Commute tracker is running…</string>
     <string name="tracker_waiting">Waiting on GPS signal…</string>
+    <string name="tracker_cannot_write">There was an error writing results!</string>
 
     <!-- App Controls -->
     <string name="stop_tracker">Stop</string>
