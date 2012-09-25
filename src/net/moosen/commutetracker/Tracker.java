@@ -1,6 +1,7 @@
 package net.moosen.commutetracker;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
@@ -17,10 +18,11 @@ public class Tracker extends Service implements LocationListener {
 	public static final int ONGOING_NOTIFICATION = 1;
 	private Notification notification = null;
 	private LocationManager lm;
-	private boolean neverLocated = true;
+	private NotificationManager notificationManager;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		showNotification();
 		lm = (LocationManager) getSystemService(LOCATION_SERVICE);
 		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5 * 1000, 0, this);
@@ -42,7 +44,6 @@ public class Tracker extends Service implements LocationListener {
 	@SuppressWarnings("deprecation")  // Using old notification code
 	protected void showNotification() {
 		notification = new Notification(android.R.drawable.ic_menu_compass, getText(R.string.tracker_starting), System.currentTimeMillis());
-
 		updateNotification(R.string.tracker_starting);
 		startForeground(ONGOING_NOTIFICATION, notification);
 	}
@@ -52,15 +53,13 @@ public class Tracker extends Service implements LocationListener {
 		Intent notificationIntent = new Intent(this, Main.class);
 		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 		notification.setLatestEventInfo(this, getText(R.string.tracker_title), getText(status_res), pendingIntent);
+		notification.tickerText = getText(status_res);
+		notificationManager.notify(ONGOING_NOTIFICATION, notification);
 	}
-
 
 	@Override
 	public void onLocationChanged(Location location) {
-		if (neverLocated) {
-			neverLocated = false;
-			updateNotification(R.string.tracker_running);
-		}
+		updateNotification(R.string.tracker_running);
 		String json = new JSONBuilder()
 			.addInfo("Accuracy", location.getAccuracy())
 			.addInfo("Altitude", location.getAltitude())
