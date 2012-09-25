@@ -25,7 +25,7 @@ public class Tracker extends Service implements LocationListener {
 		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		showNotification();
 		lm = (LocationManager) getSystemService(LOCATION_SERVICE);
-		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5 * 1000, 0, this);
+		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 30 * 1000, 0, this);
 		return super.onStartCommand(intent, flags, startId);
 	}
 
