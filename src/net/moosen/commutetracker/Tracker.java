@@ -128,6 +128,7 @@ public class Tracker extends Service implements LocationListener {
  */
 class JSONBuilder {
 	private StringBuilder sb;
+	private boolean started = false;
 
 	public JSONBuilder() {
 		sb = new StringBuilder(512);
@@ -141,12 +142,16 @@ class JSONBuilder {
 	 * @return Myself
 	 */
 	public JSONBuilder addInfo(String key, Object value) {
+		if (started) {
+			sb.append(",\n");
+		} else {
+			started = true;
+		}
 		sb.append("  \"");
 		sb.append(key);
 		sb.append('"');
 		sb.append(": ");
 		sb.append(value);
-		sb.append(",\n");
 
 		return this;
 	}
@@ -169,7 +174,9 @@ class JSONOutputStream {
 	}
 
 	public void write(JSONBuilder object) throws IOException {
-		if (!started) {
+		if (started) {
+			out.write(',');
+		} else {
 			out.write('[');
 			started = true;
 		}
