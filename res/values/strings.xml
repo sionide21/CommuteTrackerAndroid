@@ -3,9 +3,10 @@
     <string name="app_name">Commute Tracker</string>
 
     <!-- Notification Strings -->
-    <string name="tracker_starting">Commute Tracker Running…</string>
+    <string name="tracker_starting">Starting location service…</string>
     <string name="tracker_title">Tracking Commute</string>
     <string name="tracker_running">Commute tracker is running…</string>
+    <string name="tracker_waiting">Waiting on GPS signal…</string>
 
     <!-- App Controls -->
     <string name="stop_tracker">Stop</string>
