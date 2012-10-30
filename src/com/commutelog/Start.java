@@ -1,4 +1,4 @@
-package net.moosen.commutetracker;
+package com.commutelog;
 
 import android.app.Activity;
 import android.content.Intent;
