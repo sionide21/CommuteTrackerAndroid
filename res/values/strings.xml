@@ -11,4 +11,8 @@
 
     <!-- App Controls -->
     <string name="stop_tracker">Stop</string>
+
+    <!-- Upload Strings -->
+    <string name="upload_running">Uploading Commutes...</string>
+    <string name="upload_start">Start Upload</string>
 </resources>
